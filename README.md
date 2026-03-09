@@ -145,12 +145,45 @@ hr-hosted-agent/
 
 ## Prerequisites
 
+### Local tools
+
 - **Python 3.12+**
 - **[Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)** — for `az login` and ACR operations
 - **[Docker](https://docs.docker.com/get-docker/)** — for building the container image
-- **A Microsoft Foundry project** with a model deployment (e.g. `gpt-4.1`)
-- **An Azure Container Registry (ACR)** — to store the container image
-- Any Azure resources your agent needs (e.g. Azure AI Search for the HR sample)
+
+### Azure resources
+
+These are the Azure resources required to run this demo end-to-end:
+
+| Resource | What it's for | Required? |
+|---|---|---|
+| **[Azure AI Foundry project](https://learn.microsoft.com/en-us/azure/foundry/foundry-portal/create-project)** | Hosts the agent, provides the project endpoint, and manages agent lifecycle | Yes |
+| **[Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview)** (model deployment) | The LLM that powers your agent (e.g. `gpt-4.1`). Created inside the Foundry project. | Yes |
+| **[Azure Container Registry (ACR)](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-intro)** | Stores the Docker image. Foundry pulls from here at deployment time. | Yes |
+| **[Azure AI Search](https://learn.microsoft.com/en-us/azure/search/search-what-is-azure-search)** | Knowledge base for grounding (the HR sample uses index `kb1-hr`). | Only if your agent uses knowledge base grounding |
+| **[Azure Storage Account](https://learn.microsoft.com/en-us/azure/storage/common/storage-account-overview)** | Auto-provisioned by the Foundry project for internal state management. You don't interact with it directly. | Auto-created |
+
+> **RBAC:** The Foundry project's managed identity needs **AcrPull** on the ACR, and if using AI Search, the identity also needs **Search Index Data Reader** on the search service.
+
+### Architecture diagram
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Azure AI Foundry                       │
+│                                                          │
+│   ┌──────────────┐     pulls image     ┌─────────────┐  │
+│   │ Hosted Agent  │◄────────────────────│     ACR     │  │
+│   │ (container)   │                     └─────────────┘  │
+│   │  :8088        │                                      │
+│   └──────┬───────┘                                      │
+│          │ calls                                         │
+│          ▼                                               │
+│   ┌──────────────┐     ┌──────────────────┐             │
+│   │ Azure OpenAI  │     │  Azure AI Search  │             │
+│   │ (gpt-4.1)     │     │  (knowledge base) │             │
+│   └──────────────┘     └──────────────────┘             │
+└─────────────────────────────────────────────────────────┘
+```
 
 ## Dependencies
 
