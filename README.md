@@ -1,5 +1,7 @@
 # Containerize Any Agent Framework Agent for Microsoft Foundry
 
+![Architecture Diagram — How to import any Agent as a Hosted Agent on Microsoft Foundry](architecture-diagram-hosted-agents.png)
+
 This repo is a **template + tutorial** for containerizing a [Microsoft Agent Framework](https://github.com/microsoft/agent-framework) agent and deploying it as a **hosted agent** on [Microsoft Foundry Agent Service](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/hosted-agents).
 
 The included HR agent is just a **sample** — you can replace it with your own agent built on Agent Framework.
