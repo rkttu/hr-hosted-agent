@@ -20,6 +20,25 @@ REQUIRED:
 
 import os
 
+# --- OpenTelemetry (OPTIONAL — remove if you don't need tracing) ---
+# Instruments Azure SDK calls and exports traces to Azure Monitor / Application Insights.
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
+APPLICATIONINSIGHTS_CONNECTION_STRING = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
+
+if APPLICATIONINSIGHTS_CONNECTION_STRING:
+    from azure.monitor.opentelemetry.exporter import AzureMonitorTraceExporter
+
+    provider = TracerProvider()
+    provider.add_span_processor(
+        SimpleSpanProcessor(
+            AzureMonitorTraceExporter(connection_string=APPLICATIONINSIGHTS_CONNECTION_STRING)
+        )
+    )
+    trace.set_tracer_provider(provider)
+
 # --- Azure identity (REQUIRED) ---
 # Use the SYNC credential. The hosting adapter handles async internally.
 from azure.identity import DefaultAzureCredential
