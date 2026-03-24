@@ -1,5 +1,7 @@
 # Part 2: Enterprise Setup — Hosted Agent + Foundry IQ + MAF Architecture
 
+**🇺🇸 English** | **[🇰🇷 한국어](README.ko.md)**
+
 **Same agent. Same code. Enterprise-grade infrastructure.**
 
 This is **Part 2** of the [Hosted Agent tutorial](../README.md). It deploys the exact same HR agent from Part 1, but on enterprise infrastructure with:
