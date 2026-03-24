@@ -14,7 +14,7 @@ Foundry hosted agents are Docker containers that expose a REST API. Your agent r
 
 The key technology is the **hosting adapter** (`from_agent_framework()`), which wraps any `ChatAgent` into a Uvicorn web server on port 8088:
 
-```
+```text
 Your ChatAgent  →  from_agent_framework(agent).run()  →  HTTP server (:8088)
                                                             ├── POST /responses   (OpenAI Responses API)
                                                             └── GET  /readiness   (health check)
@@ -44,6 +44,7 @@ The file `original/hr_agent.py` is a **sample agent** — a standalone Agent Fra
 4. Call `from_agent_framework(agent).run()` — this starts the HTTP server
 
 **To swap in your own agent**, edit `main.py`:
+
 - Replace `HR_INSTRUCTIONS` with your agent's system prompt
 - Replace/remove `AzureAISearchContextProvider` with your agent's tools or context providers (or use `context_providers=[]` if none)
 - Update `name` and `id` in the `ChatAgent` constructor
@@ -57,7 +58,7 @@ The Dockerfile packages your agent into a Docker image:
 docker build --platform linux/amd64 -t my-agent:latest .
 ```
 
-The image uses Python 3.12, installs dependencies with `uv` (fast pip alternative), and runs `python main.py` as the entry point. Port 8088 is exposed for the hosting adapter.
+The image uses Python 3.12, installs dependencies with `uv` (reads `pyproject.toml`), and runs `main.py` as the entry point. Port 8088 is exposed for the hosting adapter.
 
 ### Step 3: Push to Azure Container Registry
 
@@ -91,6 +92,7 @@ python deploy.py
 This creates an agent entry in Foundry with the container image, resource allocation (CPU/memory), and environment variables your agent needs at runtime.
 
 **To customize for your agent**, edit `deploy.py`:
+
 - Change `AGENT_NAME` and `description`
 - Update `environment_variables` to match what your agent reads from `os.getenv()`
 
@@ -102,14 +104,14 @@ Go to the **Foundry portal** → **Agents** → find your agent → click **Star
 
 ## Project Structure
 
-```
+```text
 hr-hosted-agent/
 ├── main.py                   # ⭐ Hosted agent entry point (the containerization layer)
 ├── original/
 │   └── hr_agent.py           # 📋 Sample agent code (standalone, for reference only)
 ├── Dockerfile                # 🐳 Container image definition
 ├── deploy.py                 # 🚀 SDK script to register agent in Foundry
-├── requirements.txt          # 📦 Python dependencies (pinned versions)
+├── pyproject.toml            # 📦 Python dependencies (uv project file)
 ├── agent.yaml                # 📄 Agent metadata (for azd CLI deployment)
 ├── .env.example              # 🔑 Environment variable template
 ├── .gitignore
@@ -119,12 +121,12 @@ hr-hosted-agent/
 ### What each file does
 
 | File | Purpose | Do you need to edit it? |
-|---|---|---|
+| --- | --- | --- |
 | `main.py` | Wraps your agent with the hosting adapter for containerization | **Yes** — replace the sample agent logic with yours |
 | `original/hr_agent.py` | Sample standalone agent (reference only, not used in the container) | No — it's just a reference |
 | `Dockerfile` | Builds the container image | Rarely — only if you add extra files |
 | `deploy.py` | Registers the agent in Foundry via SDK | **Yes** — update agent name, description, env vars |
-| `requirements.txt` | Pinned Python dependencies | Only if your agent needs additional packages |
+| `pyproject.toml` | Python dependencies (uv project file) | Only if your agent needs additional packages |
 | `agent.yaml` | Declarative agent definition (alternative to deploy.py, for `azd` CLI) | Optional |
 | `.env.example` | Template for environment variables | Copy to `.env` for local dev |
 
@@ -133,7 +135,7 @@ hr-hosted-agent/
 ## What Changed: Original Agent → Hosted Agent
 
 | Aspect | Original (`original/hr_agent.py`) | Hosted (`main.py`) |
-|---|---|---|
+| --- | --- | --- |
 | **Class** | `Agent` | `ChatAgent` |
 | **Execution** | One-shot async script (`asyncio.run`) | Long-running HTTP server (Uvicorn on :8088) |
 | **Credential** | Async `DefaultAzureCredential` | Sync `DefaultAzureCredential` |
@@ -150,6 +152,7 @@ hr-hosted-agent/
 ### Local tools
 
 - **Python 3.12+**
+- **[uv](https://docs.astral.sh/uv/)** — fast Python package manager
 - **[Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)** — for `az login` and ACR operations
 - **[Docker](https://docs.docker.com/get-docker/)** — for building the container image
 
@@ -158,7 +161,7 @@ hr-hosted-agent/
 These are the Azure resources required to run this demo end-to-end:
 
 | Resource | What it's for | Required? |
-|---|---|---|
+| --- | --- | --- |
 | **[Azure AI Foundry project](https://learn.microsoft.com/en-us/azure/foundry/foundry-portal/create-project)** | Hosts the agent, provides the project endpoint, and manages agent lifecycle | Yes |
 | **[Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview)** (model deployment) | The LLM that powers your agent (e.g. `gpt-4.1`). Created inside the Foundry project. | Yes |
 | **[Azure Container Registry (ACR)](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-intro)** | Stores the Docker image. Foundry pulls from here at deployment time. | Yes |
@@ -169,7 +172,7 @@ These are the Azure resources required to run this demo end-to-end:
 
 ### Architecture diagram
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                   Azure AI Foundry                       │
 │                                                          │
@@ -190,7 +193,7 @@ These are the Azure resources required to run this demo end-to-end:
 ## Dependencies
 
 | Package | Purpose |
-|---|---|
+| --- | --- |
 | `azure-ai-agentserver-agentframework` | Hosting adapter (`from_agent_framework()`) |
 | `agent-framework-core` | Core Agent Framework (`ChatAgent`) |
 | `agent-framework-azure-ai` | Azure AI client integration |
@@ -198,7 +201,7 @@ These are the Azure resources required to run this demo end-to-end:
 | `azure-ai-projects` | SDK to register agents in Foundry |
 | `azure-identity` | Azure authentication |
 
-All packages are in preview — the `--pre` flag is required when installing.
+All packages are in preview — `[tool.uv] prerelease = "allow"` is set in `pyproject.toml`.
 
 ---
 
@@ -209,15 +212,16 @@ All packages are in preview — the `--pre` flag is required when installing.
 cp .env.example .env
 # Edit .env with your values
 
-# 2. Install dependencies
-pip install --pre -r requirements.txt
+# 2. Install dependencies (requires uv: https://docs.astral.sh/uv/)
+uv sync
 
 # 3. Start the agent
-python main.py
+uv run main.py
 # Agent starts on http://localhost:8088
 ```
 
 Test it:
+
 ```bash
 curl -X POST http://localhost:8088/responses \
   -H "Content-Type: application/json" \

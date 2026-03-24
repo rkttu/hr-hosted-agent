@@ -32,7 +32,7 @@ ChatAgent → from_agent_framework(agent).run() → HTTP server (:8088)
 | `deploy.py` | Registers the container with Foundry via SDK |
 | `agent.yaml` | Agent manifest for Foundry |
 | `Dockerfile` | Container image definition |
-| `requirements.txt` | Python dependencies |
+| `pyproject.toml` | Python dependencies (uv project file) |
 | `original/hr_agent.py` | Original standalone agent (reference only) |
 | `enterprise/` | Enterprise variant with CMK, Managed Identity, Private Endpoints |
 | `enterprise/infra/` | Bicep modules for enterprise infrastructure |
@@ -88,13 +88,20 @@ docker build --platform linux/amd64 -t my-agent:latest .
 
 ### 6. Python Dependencies
 
-Use `uv` (fast pip alternative) for dependency installation inside Docker. See `Dockerfile` for the pattern. Key packages:
+This project uses `uv` for dependency management. Dependencies are declared in `pyproject.toml`. Key packages:
 
 - `azure-ai-agentserver-agentframework` — hosting adapter
 - `agent-framework-core` — core agent framework
 - `agent-framework-azure-ai` — Azure AI integration
 - `azure-ai-projects` — Foundry deployment SDK
 - `azure-identity` — authentication
+
+Local workflow:
+```bash
+uv sync            # install dependencies
+uv run main.py     # run the agent
+uv add <package>   # add a new dependency
+```
 
 ### 7. Coding Style
 

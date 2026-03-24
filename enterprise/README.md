@@ -5,7 +5,7 @@
 This is **Part 2** of the [Hosted Agent tutorial](../README.md). It deploys the exact same HR agent from Part 1, but on enterprise infrastructure with:
 
 | Enterprise Feature | What It Does |
-|---|---|
+| --- | --- |
 | **Customer-Managed Keys (CMK)** | All data at rest encrypted with YOUR key from YOUR Key Vault |
 | **Keyless Auth (Managed Identity)** | Zero API keys anywhere — all auth via User-Assigned Managed Identity + RBAC |
 | **Private Endpoints** | Every service behind a VNET — no public internet exposure |
@@ -16,7 +16,7 @@ This is **Part 2** of the [Hosted Agent tutorial](../README.md). It deploys the 
 
 ## Architecture
 
-```
+```text
 ┌──────────────────── Virtual Network (10.0.0.0/16) ────────────────────┐
 │                                                                        │
 │  Private Endpoints Subnet (10.0.1.0/24)                               │
@@ -51,7 +51,7 @@ This is **Part 2** of the [Hosted Agent tutorial](../README.md). It deploys the 
 ### What's different from Part 1
 
 | Aspect | Part 1 (Standard) | Part 2 (Enterprise) |
-|---|---|---|
+| --- | --- | --- |
 | **Network** | Public endpoints | Private endpoints + VNET |
 | **Encryption** | Microsoft-managed keys | Customer-managed keys (CMK) from your Key Vault |
 | **Authentication** | DefaultAzureCredential (any method) | Managed Identity only — API keys disabled on ALL services |
@@ -67,7 +67,7 @@ This is **Part 2** of the [Hosted Agent tutorial](../README.md). It deploys the 
 
 ## Project Structure
 
-```
+```text
 enterprise/
 ├── infra/                              # 🏗️  Bicep infrastructure-as-code
 │   ├── main.bicep                      #     Orchestrator — deploys everything
@@ -83,7 +83,7 @@ enterprise/
 ├── deploy.py                           # 🚀 Register agent in Foundry (identical to Part 1)
 ├── deploy-infra.ps1                    # 🏗️  PowerShell script to deploy all infrastructure
 ├── Dockerfile                          # 🐳 Container image (identical to Part 1)
-├── requirements.txt                    # 📦 Dependencies (identical to Part 1)
+├── pyproject.toml                      # 📦 Dependencies (uv project file)
 ├── agent.yaml                          # 📄 Agent metadata
 └── README.md                           # 📖 This file
 ```
@@ -95,6 +95,7 @@ enterprise/
 ### Azure permissions
 
 The deployer needs:
+
 - **Contributor** on the subscription/resource group (to create resources)
 - **User Access Administrator** (to create RBAC role assignments)
 - The deployment script will auto-grant **Key Vault Crypto Officer** for CMK key creation
@@ -122,6 +123,7 @@ cd enterprise
 ```
 
 This creates **all** Azure resources with:
+
 - ✅ Private endpoints on every service
 - ✅ CMK encryption on Storage, AI Services, ACR (+ CMK enforcement on AI Search)
 - ✅ API keys disabled on AI Services, AI Search, Storage
@@ -217,7 +219,7 @@ The hosted agent continues to work because Foundry routes traffic through the pr
 Creates a single **User-Assigned Managed Identity** used across all resources. This is the cornerstone of the keyless auth strategy — one identity, all RBAC roles:
 
 | Role | Resource | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | Key Vault Crypto User | Key Vault | Use CMK key for encryption/decryption |
 | Storage Blob Data Contributor | Storage | Read/write blobs |
 | Cognitive Services OpenAI Contributor | AI Services | Call OpenAI models |
@@ -230,7 +232,7 @@ Creates a single **User-Assigned Managed Identity** used across all resources. T
 Creates a VNET with a private endpoint subnet and **7 private DNS zones**:
 
 | DNS Zone | Service |
-|---|---|
+| --- | --- |
 | `privatelink.cognitiveservices.azure.com` | AI Services |
 | `privatelink.openai.azure.com` | OpenAI endpoints |
 | `privatelink.search.windows.net` | AI Search |
@@ -302,18 +304,23 @@ need public access (or VNET access) for management operations.
 ## Troubleshooting
 
 ### Deployment fails on first run
+
 RBAC role assignments can take 5-10 minutes to propagate. If the deployment fails with a permissions error (especially on Key Vault key creation or CMK configuration), wait 5 minutes and retry.
 
 ### ACR push fails
+
 The ACR has `publicNetworkAccess: 'Disabled'`. To push images:
+
 - Use `az acr build` to build in the cloud (recommended — works even with private endpoints)
 - Or temporarily enable public access: `az acr update --name <acr> --public-network-enabled true`
 
 ### Foundry portal shows "unable to connect"
+
 This is expected when public access is disabled. Access the portal from inside the VNET
 (via VM/VPN) or temporarily enable public access on AI Services.
 
 ### Model deployment not available
+
 The `gpt-4.1` model may not be available in all regions. Check [model availability](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models) and adjust the `modelDeploymentName` parameter.
 
 ---
@@ -343,7 +350,7 @@ You can automate this with the included `validate-enterprise.ps1` script:
 Same as Part 1 — the app code doesn't change:
 
 | Package | Purpose |
-|---|---|
+| --- | --- |
 | `azure-ai-agentserver-agentframework` | Hosting adapter |
 | `agent-framework-core` | Core Agent Framework |
 | `agent-framework-azure-ai` | Azure AI client |

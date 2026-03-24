@@ -4,11 +4,11 @@ WORKDIR /app
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-COPY requirements.txt ./
-COPY main.py ./
+COPY pyproject.toml ./
+RUN uv sync --no-dev --no-install-project
 
-RUN uv pip install --system --pre -r requirements.txt
+COPY main.py ./
 
 EXPOSE 8088
 
-CMD ["python", "main.py"]
+CMD [".venv/bin/python", "main.py"]
